@@ -11,4 +11,6 @@ export const env = {
     adminRefreshSecret: "sara7a_admin_refresh_secret",
     accessExpiresIn: "1h",
     refreshExpiresIn: "7d",
+    uploadsDir: "uploads",
+    maxFileSize: 5 * 1024 * 1024,
 };

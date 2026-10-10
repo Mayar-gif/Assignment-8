@@ -8,6 +8,7 @@ const messageSchema = new mongoose.Schema({
         minLength: 1,
         maxLength: 1000,
     },
+    attachments: [String],
     receiverId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "user",

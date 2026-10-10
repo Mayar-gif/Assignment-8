@@ -44,6 +44,21 @@ export const updatePassword = {
     }).required(),
 };
 
+export const profileImage = {
+    file: generalFields.file.required(),
+};
+
+export const coverImages = {
+    files: Joi.array().items(generalFields.file).min(1).max(5).required(),
+};
+
+export const profileFiles = {
+    files: Joi.object({
+        profileImage: Joi.array().items(generalFields.file).length(1).required(),
+        coverImages: Joi.array().items(generalFields.file).min(1).max(5),
+    }).required(),
+};
+
 export const shareProfile = {
     params: Joi.object({ userId: generalFields.id.required() }).required(),
 };

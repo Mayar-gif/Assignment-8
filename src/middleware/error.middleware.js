@@ -8,7 +8,8 @@ export const globalErrorHandler = (err, req, res, next) => {
     let status = typeof err.cause === "number" ? err.cause : err.status || 500;
     let message = err.message;
 
-    if (err.name === "ValidationError") status = 400;               
+    if (err.name === "ValidationError") status = 400;
+    if (err.name === "MulterError") status = 400;
     if (err.name === "CastError") { status = 400; message = "Invalid id"; }
     if (err.code === 11000) {                                      
         status = 409;

@@ -1,4 +1,5 @@
 import express from "express";
+import { uploadsRoot } from "./utils/multer/local.multer.js";
 import { env } from "./config/env.service.js";
 import connectionDB from "./DB/connectionDB.js";
 import userRouter from "./modules/users/user.controller.js";
@@ -8,6 +9,7 @@ import { notFoundHandler, globalErrorHandler } from "./middleware/error.middlewa
 const bootstrap = async () => {
     const app = express();
     app.use(express.json());
+    app.use("/uploads", express.static(uploadsRoot));
 
     await connectionDB();
 

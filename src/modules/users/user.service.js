@@ -6,6 +6,7 @@ import { providerEnum } from "../../common/enums.js";
 import { generateHash, compareHash } from "../../utils/security/hash.js";
 import { encrypt, decrypt } from "../../utils/security/encryption.js";
 import { createLoginCredentials } from "../../utils/security/token.js";
+import { getFilePath, removeFile, removeFiles, saveBuffer } from "../../utils/multer/file.service.js";
 
 const toUserResponse = (user) => ({
     _id: user._id,
@@ -18,6 +19,7 @@ const toUserResponse = (user) => ({
     phone: user.phone ? decrypt(user.phone) : undefined,
     role: user.role,
     profileImage: user.profileImage,
+    coverImages: user.coverImages,
     isConfirmed: user.isConfirmed,
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -125,7 +127,62 @@ export const logoutAll = async (req, res) => {
     return successResponse({ res, message: "Logged out from all devices" });
 };
 
+export const uploadProfileImage = async (req, res) => {
+    const oldImage = req.user.profileImage;
+    const user = await dbService.findOneAndUpdate({
+        model: userModel,
+        filter: { _id: req.user._id },
+        update: { profileImage: getFilePath(req.file) },
+    });
+    await removeFile(oldImage);
+    return successResponse({ res, message: "Profile image uploaded", data: toUserResponse(user) });
+};
+
+export const uploadProfileImageMemory = async (req, res) => {
+    const oldImage = req.user.profileImage;
+    const profileImage = await saveBuffer({ file: req.file, customPath: "profile", owner: req.user._id });
+    const user = await dbService.findOneAndUpdate({
+        model: userModel,
+        filter: { _id: req.user._id },
+        update: { profileImage },
+    });
+    await removeFile(oldImage);
+    return successResponse({ res, message: "Profile image uploaded", data: toUserResponse(user) });
+};
+
+export const uploadCoverImages = async (req, res) => {
+    const oldImages = req.user.coverImages;
+    const user = await dbService.findOneAndUpdate({
+        model: userModel,
+        filter: { _id: req.user._id },
+        update: { coverImages: req.files.map(getFilePath) },
+    });
+    await removeFiles(oldImages);
+    return successResponse({ res, message: "Cover images uploaded", data: toUserResponse(user) });
+};
+
+export const uploadProfileFiles = async (req, res) => {
+    const { profileImage, coverImages } = req.files;
+    const oldImage = req.user.profileImage;
+    const oldCovers = req.user.coverImages;
+    const user = await dbService.findOneAndUpdate({
+        model: userModel,
+        filter: { _id: req.user._id },
+        update: {
+            profileImage: getFilePath(profileImage[0]),
+            ...(coverImages && { coverImages: coverImages.map(getFilePath) }),
+        },
+    });
+    await removeFile(oldImage);
+    if (coverImages) await removeFiles(oldCovers);
+    return successResponse({ res, message: "Profile files uploaded", data: toUserResponse(user) });
+};
+
 export const deleteProfile = async (req, res) => {
+    const messages = await dbService.find({ model: messageModel, filter: { receiverId: req.user._id }, select: "attachments" });
+    await removeFiles(messages.flatMap((message) => message.attachments));
+    await removeFile(req.user.profileImage);
+    await removeFiles(req.user.coverImages);
     await dbService.deleteMany({ model: messageModel, filter: { receiverId: req.user._id } });
     await dbService.deleteOne({ model: userModel, filter: { _id: req.user._id } });
     return successResponse({ res, message: "Account deleted" });

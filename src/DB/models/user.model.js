@@ -46,6 +46,7 @@ const userSchema = new mongoose.Schema({
         default: roleEnum.user,
     },
     profileImage: String,
+    coverImages: [String],
     provider: {
         type: String,
         enum: Object.values(providerEnum),
